@@ -1,80 +1,83 @@
 from datetime import datetime
 import requests
+import json
+
+############
+# Input
+area_id = "" # eskom area id, please see docs NOTE the string must be lowercase
+ifttt_key = "" # ifttt webhook key
+file_location = "" # folder location of log file
+esp_token = "" # EskomSePush API Token
+############
+
 payload = {}
-headers = {"token" : "063120A8-A6F64402-9C6D6378-69CDFA5B"}
+headers = {"token" : esp_token}
+date= datetime.today().strftime('%Y-%m-%d')
 
 url = "https://developer.sepush.co.za/business/2.0/api_allowance"
 response = requests.request("GET", url, headers=headers, data=payload)
-text = response.text
+text = json.loads(response.text)
+count = int(text["allowance"]["count"])
 
-out = text[text.find("count"):text.find('"t')]
-out = out.replace('"','').replace(",",' ')
-count = out[out.find(":")+1:out.find(" ")]
-#print(count)
 current_time = datetime.today().strftime('%H:%M')
-date= datetime.today().strftime('%Y-%m-%d')
-if int(count) < 50:
-    url = "https://developer.sepush.co.za/business/2.0/area?id=capetown-5-claremont"
+
+if count < 50:
+    url = "https://developer.sepush.co.za/business/2.0/area?id="+area_id
     response = requests.request("GET", url, data=payload, headers=headers)
-
     text = response.text
-    #print(text)
-    start = text[text.find('"date":'+'"'+date+'"')::]
-    split = start[:start.find("{")].split(",[")
+    split = json.loads(text)
+    sch = split["schedule"]
+    events = split["events"]
+    days = sch["days"]
+    today = ""
+    for i in range(len(days)):
+        if days[i]["date"] == date:
+            today = days[i]
+            break
+    stages = today["stages"]
+    stages = str(stages)
+    stages = stages.split("],")
+   
+    largest_stage = ""
 
-    stage0 = split[0].split("[[")[1] 
-    split[0] = stage0 
+    times_list = []
 
-    offset = len('note":"Stage ')
-    stage_begin = text.find('note":"Stage ')+offset
-    stage = text[stage_begin:stage_begin+1:]
+    for i in stages:
+        i = i.replace("[", "").replace("]", "").replace(" ", "").replace("'", "")
+        times_list.append(i)
 
+    #print(times_list)
+    fin_out = ""
 
-
-    times = []
-    if int(stage) == 2:
-        times = split[int(stage)-1]
-    elif (int(stage)+1)<=(len(split)):
-        times = split[int(stage)-2]
-    else:
-        times = split[0]
-
-    times = times.split('",')
-
-    file = open("log.txt","r+")
-    lines = file.readlines()
-
-    fin_out = "Stage: "+stage
-
-    if len(times) >= 1:
-        for i in times:
-            i = i.replace('"', '')
-            i = i.replace(']','')
+    for i in events:
+        event_start = i["start"]
+        event_start_time=str(event_start).split("T")[1].split("+")[0][:-3]
+        event_end = i["end"]
+        event_end_time=str(event_end).split("T")[1].split("+")[0][:-3]
+        file = open(file_location+"/log.txt","r+")
+        lines = file.readlines()
+        if date in event_start or date in event_end:
+            #print(i)
             
-            start_end = i.split("-")
-            start_time = start_end[0]
-            end_time = start_end[1]
-            if current_time < start_time:
-                req = 'https://maker.ifttt.com/trigger/recieve_loadshedding_time/with/key/FctvAiSHAmO0BMOKF4YhO?value1='+start_time+'&'+'value2='+end_time
-                req_w_date = date+" - "+req
-                if req_w_date+"\n" not in lines:
-                    file.write(req_w_date+'\n')
-                    fin_out = fin_out  + " - "+i+" => request made"
-                    print(fin_out)
-                    requests.post(req)
-                else:
-                    fin_out = fin_out + " - "+i+" => already there"
-                    print(fin_out)
-            print(fin_out+" - "+ i +" - no more loadshedding today: "+date)
-    else:
-        fin_out = fin_out+" - no loadshedding => "+date
-        print(fin_out)
+            stage = int(str(i["note"]).split(" ")[1])
+            fin_out = fin_out + "|stage: " + str(stage)
+            #print(event_start_time, event_end_time)
+            req = 'https://maker.ifttt.com/trigger/recieve_loadshedding_time/with/key/'+ifttt_key+'?value1='+event_start_time+'&value2='+event_end_time+'&value3='+str(stage)
+            req_w_date = date+" - "+req
+            if req_w_date+"\n" not in lines:
+                file.write(req_w_date+'\n')
+                fin_out = fin_out  + " - "+event_start_time+"-"+event_end_time+" => request made| "
+                requests.post(req)
+            else:
+                fin_out = fin_out + " - "+event_start_time+"-"+event_end_time+" => already there| "
+
+            #times = str(times_list[stage-1]).split(",")
+            #
+            #for t in times:
+            #    time = t.split("-")
+            #    if time[0] >= event_start_time and time[1]>=event_end_time:
+            #        print("stage",stage, time)
+    print(fin_out)
     file.close()
-    
-
 else:
-    print(date+" "+current_time+" - quota exceded")
-
-
-
-
+     print(date+" "+ current_time+" - quota exceded")
