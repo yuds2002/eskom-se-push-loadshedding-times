@@ -46,7 +46,6 @@ if count < 50:
         i = i.replace("[", "").replace("]", "").replace(" ", "").replace("'", "")
         times_list.append(i)
 
-    #print(times_list)
     fin_out = ""
 
     for i in events:
@@ -57,26 +56,31 @@ if count < 50:
         file = open(file_location+"/log.txt","r+")
         lines = file.readlines()
         if date in event_start or date in event_end:
-            #print(i)
-            
+    
+            currently_loadshedding = (event_start_time < current_time and current_time < event_end_time)
+            outlier = event_end_time < event_start_time
             stage = int(str(i["note"]).split(" ")[1])
             fin_out = fin_out + "|stage: " + str(stage)
             #print(event_start_time, event_end_time)
             req = 'https://maker.ifttt.com/trigger/recieve_loadshedding_time/with/key/'+ifttt_key+'?value1='+event_start_time+'&value2='+event_end_time+'&value3='+str(stage)
             req_w_date = date+" - "+req
-            if req_w_date+"\n" not in lines:
-                file.write(req_w_date+'\n')
-                fin_out = fin_out  + " - "+event_start_time+"-"+event_end_time+" => request made| "
-                requests.post(req)
-            else:
-                fin_out = fin_out + " - "+event_start_time+"-"+event_end_time+" => already there| "
-
-            #times = str(times_list[stage-1]).split(",")
-            #
-            #for t in times:
-            #    time = t.split("-")
-            #    if time[0] >= event_start_time and time[1]>=event_end_time:
-            #        print("stage",stage, time)
+            if not currently_loadshedding:
+                if not outlier:
+                    if req_w_date+"\n" not in lines:
+                        requests.post(req)
+                        fin_out = fin_out  + " - "+event_start_time+"-"+event_end_time+" => request made| "
+                        file.write(req_w_date+'\n')
+                    else:
+                        fin_out = fin_out + " - "+event_start_time+"-"+event_end_time+" => already there| "
+                elif outlier and current_time > event_end_time:
+                    if req_w_date+"\n" not in lines:
+                        requests.post(req)
+                        fin_out = fin_out  + " - "+event_start_time+"-"+event_end_time+" => request made| "
+                        file.write(req_w_date+'\n')
+                    else:
+                        fin_out = fin_out + " - "+event_start_time+"-"+event_end_time+" => already there| "
+    if len(fin_out)<=0:
+        fin_out = "no loadshedding"
     print(fin_out)
     file.close()
 else:
