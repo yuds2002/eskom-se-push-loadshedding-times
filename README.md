@@ -10,6 +10,9 @@ Get the loadshedding times for the day, and send a webhook via IFTTT to update y
 # STEPS:
   - Download the above files to your desired file_location
   - Create an IFTTT Applet to recieve a webhook (be sure to update the eskom.py file with the webhook key)
+  - the webhook should recieve two values:
+    - value1: the starting time
+    - value2: the ending time
   - Fill in the information required in the eskom.py file
   - create the following cronjobs:
     - SHELL=/bin/sh
