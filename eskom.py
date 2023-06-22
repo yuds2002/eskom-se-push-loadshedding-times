@@ -62,7 +62,7 @@ if count < 50:
             stage = int(str(i["note"]).split(" ")[1])
             fin_out = fin_out + "|stage: " + str(stage)
             #print(event_start_time, event_end_time)
-            req = 'https://maker.ifttt.com/trigger/recieve_loadshedding_time/with/key/'+ifttt_key+'?value1='+event_start_time+'&value2='+event_end_time+'&value3='+str(stage)
+            req = 'https://maker.ifttt.com/trigger/receive_loadshedding_time/with/key/'+ifttt_key+'?value1='+event_start_time+'&value2='+event_end_time+'&value3='+str(stage)
             req_w_date = date+" - "+req
             if not currently_loadshedding:
                 if not outlier:
