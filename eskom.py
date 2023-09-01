@@ -53,6 +53,12 @@ if count < 50:
         event_start_time=str(event_start).split("T")[1].split("+")[0][:-3]
         event_end = i["end"]
         event_end_time=str(event_end).split("T")[1].split("+")[0][:-3]
+        
+        event_end_time_hour = event_end_time[:2:]
+        if event_end_time_hour > '12':
+            event_end_time = str(int(event_end_time_hour)-12)+":"+event_end_time[3::]+"pm"
+        #print(event_end_time)
+        
         file = open(file_location+"/log.txt","r+")
         lines = file.readlines()
         if date in event_start or date in event_end:
@@ -84,4 +90,4 @@ if count < 50:
     print(fin_out)
     file.close()
 else:
-     print(date+" "+ current_time+" - quota exceded")
+    print(date+" "+ current_time+" - quota exceded")
