@@ -1,4 +1,4 @@
-from datetime import datetime
+catfrom datetime import datetime
 import requests
 import json
 
@@ -26,68 +26,71 @@ if count < 50:
     response = requests.request("GET", url, data=payload, headers=headers)
     text = response.text
     split = json.loads(text)
-    sch = split["schedule"]
-    events = split["events"]
-    days = sch["days"]
-    today = ""
-    for i in range(len(days)):
-        if days[i]["date"] == date:
-            today = days[i]
-            break
-    stages = today["stages"]
-    stages = str(stages)
-    stages = stages.split("],")
-   
-    largest_stage = ""
+    if "schedule" in split and "events" in split:
+        sch = split["schedule"]
+        events = split["events"]
+        days = sch["days"]
+        today = ""
+        for i in range(len(days)):
+            if days[i]["date"] == date:
+                today = days[i]
+                break
+        stages = today["stages"]
+        stages = str(stages)
+        stages = stages.split("],")
 
-    times_list = []
+        largest_stage = ""
 
-    for i in stages:
-        i = i.replace("[", "").replace("]", "").replace(" ", "").replace("'", "")
-        times_list.append(i)
+        times_list = []
 
-    fin_out = ""
+        for i in stages:
+            i = i.replace("[", "").replace("]", "").replace(" ", "").replace("'", "")
+            times_list.append(i)
 
-    for i in events:
-        event_start = i["start"]
-        event_start_time=str(event_start).split("T")[1].split("+")[0][:-3]
-        event_end = i["end"]
-        event_end_time=str(event_end).split("T")[1].split("+")[0][:-3]
-        
-        event_end_time_hour = event_end_time[:2:]
-        if event_end_time_hour > '12':
-            event_end_time = str(int(event_end_time_hour)-12)+":"+event_end_time[3::]+"pm"
-        #print(event_end_time)
-        
-        file = open(file_location+"/log.txt","r+")
-        lines = file.readlines()
-        if date in event_start or date in event_end:
-    
-            currently_loadshedding = (event_start_time < current_time and current_time < event_end_time)
-            outlier = event_end_time < event_start_time
-            stage = int(str(i["note"]).split(" ")[1])
-            fin_out = fin_out + "|stage: " + str(stage)
-            #print(event_start_time, event_end_time)
-            req = 'https://maker.ifttt.com/trigger/receive_loadshedding_time/with/key/'+ifttt_key+'?value1='+event_start_time+'&value2='+event_end_time+'&value3='+str(stage)
-            req_w_date = date+" - "+req
-            if not currently_loadshedding:
-                if not outlier:
-                    if req_w_date+"\n" not in lines:
-                        requests.post(req)
-                        fin_out = fin_out  + " - "+event_start_time+"-"+event_end_time+" => request made| "
-                        file.write(req_w_date+'\n')
-                    else:
-                        fin_out = fin_out + " - "+event_start_time+"-"+event_end_time+" => already there| "
-                elif outlier and current_time > event_end_time:
-                    if req_w_date+"\n" not in lines:
-                        requests.post(req)
-                        fin_out = fin_out  + " - "+event_start_time+"-"+event_end_time+" => request made| "
-                        file.write(req_w_date+'\n')
-                    else:
-                        fin_out = fin_out + " - "+event_start_time+"-"+event_end_time+" => already there| "
-    if len(fin_out)<=0:
-        fin_out = "no loadshedding"
-    print(fin_out)
-    file.close()
+        fin_out = ""
+
+        for i in events:
+            event_start = i["start"]
+            event_start_time=str(event_start).split("T")[1].split("+")[0][:-3]
+            event_end = i["end"]
+            event_end_time=str(event_end).split("T")[1].split("+")[0][:-3]
+            event_end_time_hour = event_end_time.split(":")[0]
+            if event_end_time_hour > "12":
+                event_end_time = str(int(event_end_time_hour)-12)+":"+event_end_time[3::]+"pm"
+            #print(event_end_time)
+            file = open(file_location+"/log.txt","r+")
+            lines = file.readlines()
+            if date in event_start or date in event_end:
+
+                currently_loadshedding = (event_start_time < current_time and current_time < event_end_time)
+                outlier = event_end_time < event_start_time
+                stage = int(str(i["note"]).split(" ")[1])
+                fin_out = fin_out + "|stage: " + str(stage)
+                #print(event_start_time, event_end_time)
+                req = 'https://maker.ifttt.com/trigger/receive_loadshedding_time/with/key/'+ifttt_key+'?value1='+event_start_time+'&value2='+event_end_time
+                req_w_date = date+" - "+req
+                if not currently_loadshedding:
+                    if not outlier:
+                        if req_w_date+"\n" not in lines:
+                            requests.post(req)
+                            fin_out = fin_out  + " - "+event_start_time+"-"+event_end_time+" => request made| "
+                            file.write(req_w_date+'\n')
+                        else:
+                            fin_out = fin_out + " - "+event_start_time+"-"+event_end_time+" => already there| "
+                    elif outlier and current_time > event_end_time:
+                        if req_w_date+"\n" not in lines:
+                            requests.post(req)
+                            fin_out = fin_out  + " - "+event_start_time+"-"+event_end_time+" => request made| "
+                            file.write(req_w_date+'\n')
+                        else:
+                            fin_out = fin_out + " - "+event_start_time+"-"+event_end_time+" => already there| "
+        if len(fin_out)<=0:
+            fin_out = "no loadshedding"
+        print(fin_out)
+        file.close()
+
+
+    else:
+        print("no loadshedding")
 else:
     print(date+" "+ current_time+" - quota exceded")
