@@ -16,8 +16,7 @@ Get the loadshedding times for the day, and send a webhook via IFTTT to update y
   - the Webhook name should be: receive_loadshedding_time
   - Fill in the information required in the eskom.py file
   - To find your area id run the following command with your area inforamtion:
-    - curl --location 'https://developer.sepush.co.za/business/2.0/areas_search?text=your_area_name' --header 'token
-: your-EskomSePush-API-token'
+    - curl --location 'https://developer.sepush.co.za/business/2.0/areas_search?text=your_area_name' --header 'token:your-EskomSePush-API-token'
     - the above will return areas with your area name in them, find your specific area and copy the id to the eskom.py file
   - create the following cronjobs:
     - SHELL=/bin/sh
