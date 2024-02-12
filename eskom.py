@@ -1,4 +1,4 @@
-catfrom datetime import datetime
+from datetime import datetime
 import requests
 import json
 
@@ -61,7 +61,7 @@ if count < 50:
             file = open(file_location+"/log.txt","r+")
             lines = file.readlines()
             if date in event_start or date in event_end:
-
+        
                 currently_loadshedding = (event_start_time < current_time and current_time < event_end_time)
                 outlier = event_end_time < event_start_time
                 stage = int(str(i["note"]).split(" ")[1])
@@ -88,7 +88,7 @@ if count < 50:
             fin_out = "no loadshedding"
         print(fin_out)
         file.close()
-
+    
 
     else:
         print("no loadshedding")
