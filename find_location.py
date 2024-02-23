@@ -8,7 +8,12 @@ headers = { 'token' : esp_token }
 res = requests.get(url, headers=headers)
 
 out = json.loads(res.text)
-print("Name\t\tID")
-for area in out["areas"]:
-    print(area["name"]+"\t"+area["id"])
+
+if "error" not in out and "areas" in out:
+    print("Name\t\tID")
+    for area in out["areas"]:
+        print(area["name"]+"\t"+area["id"])
+else:
+    print(out["error"])
+
 
