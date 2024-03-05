@@ -1,6 +1,6 @@
 # esp-loadshedding-times
 
-Get the loadshedding times for the day, and send a webhook via IFTTT to update your Google Calendar
+Get the loadshedding times for the day, and send a webhook via Make to update your Google Calendar
 
 # Prerequisites:
 
